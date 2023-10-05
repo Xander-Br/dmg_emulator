@@ -3,6 +3,8 @@ use std::iter::Cycle;
 use crate::bus::Bus;
 use crate::cpu::CPU;
 use crate::cpu::function::*;
+
+
 use crate::cpu::registers::{Flag, RegisterName};
 
 pub type OpCodeHandler = fn(&mut CPU) -> u8;
@@ -11,8 +13,12 @@ pub fn init_opcode_handlers() -> HashMap<u8, OpCodeHandler> {
     let mut map: HashMap<u8, OpCodeHandler> = HashMap::new();
 
     map.insert(0x00, |_| 4);
-    /*BC*/
-    /*B*/
+    map.insert(0x0E, |cpu| ld_ru8(cpu, RegisterName::C, 8));
+    map.insert(0x11, |cpu| ld_ru16(cpu, RegisterName::DE, 12));
+    map.insert(0x21, |cpu| ld_ru16(cpu, RegisterName::HL, 12));
+    map.insert(0x47, |cpu| ld_rr(cpu, RegisterName::B, RegisterName::A, 4));
+    map.insert(0xC3, |cpu| jp(cpu, 16));
+
     map.insert(0x01, |cpu| ld_ru16(cpu, RegisterName::BC, 12));
     map.insert(0x02, |cpu| ld_mr(cpu, RegisterName::BC, RegisterName::A, Direction::None, 8));
     map.insert(0x03, |cpu| inc_r(cpu, RegisterName::BC, 8));
@@ -22,19 +28,17 @@ pub fn init_opcode_handlers() -> HashMap<u8, OpCodeHandler> {
     map.insert(0x07, |cpu| rlca(cpu, 4));
     map.insert(0x08, |cpu| ld_u16_sp(cpu, 20));
     map.insert(0x09, |cpu| add_rr(cpu, RegisterName::HL, RegisterName::BC, 8));
-    map.insert(0x0A, |cpu| ld_rm(cpu, RegisterName::B, RegisterName::BC, Direction::None, 8));
+    map.insert(0x0A, |cpu| ld_rm(cpu, RegisterName::A, RegisterName::BC, Direction::None, 8));
     /*C*/
     map.insert(0x0B, |cpu| dec_r(cpu, RegisterName::BC, 8));
     map.insert(0x0C, |cpu| inc_r(cpu, RegisterName::C, 4));
     map.insert(0x0D, |cpu| dec_r(cpu, RegisterName::C, 4));
-    map.insert(0x0E, |cpu| ld_ru8(cpu, RegisterName::C, 8));
     map.insert(0x0F, |cpu| rrca(cpu, 4));
 
     //Stop
     map.insert(0x10, |cpu| panic!("STOP"));
     /*DE*/
     /*D*/
-    map.insert(0x11, |cpu| ld_ru16(cpu, RegisterName::DE, 12));
     map.insert(0x12, |cpu| ld_mr(cpu, RegisterName::DE, RegisterName::A, Direction::None, 8));
     map.insert(0x13, |cpu| inc_r(cpu, RegisterName::DE, 8));
     map.insert(0x14, |cpu| inc_r(cpu, RegisterName::D, 4));
@@ -80,7 +84,7 @@ pub fn init_opcode_handlers() -> HashMap<u8, OpCodeHandler> {
     map.insert(0x33, |cpu| inc_r(cpu, RegisterName::SP, 8));
     map.insert(0x34, |cpu| inc_m(cpu, RegisterName::HL, 12));
     map.insert(0x35, |cpu| dec_m(cpu, RegisterName::HL, 12));
-    map.insert(0x36, |cpu| ld_ru8(cpu, RegisterName::H, 12));
+    map.insert(0x36, |cpu| ld_m_u8(cpu, RegisterName::HL, 12));
     map.insert(0x37, |cpu| scf(cpu, 4));
     map.insert(0x38, |cpu| jr_if(cpu, Flag::C, true, 8));
     map.insert(0x39, |cpu| add_rr(cpu, RegisterName::HL, RegisterName::SP, 8));
@@ -257,7 +261,8 @@ pub fn init_opcode_handlers() -> HashMap<u8, OpCodeHandler> {
     map.insert(0xC0, |cpu| ret_if(cpu, Flag::Z, false, 8));
     map.insert(0xC1, |cpu| pop_r(cpu, RegisterName::BC, 12));
     map.insert(0xC2, |cpu| jp_if(cpu, Flag::Z, false, 12));
-    map.insert(0xC3, |cpu| jp(cpu, 16));
+
+
     map.insert(0xC4, |cpu| call_if(cpu, Flag::Z, false, 12));
     map.insert(0xC5, |cpu| push_r(cpu, RegisterName::BC, 16));
     map.insert(0xC6, |cpu| add_rv(cpu, RegisterName::A, 8));
